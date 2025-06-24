@@ -1,0 +1,79 @@
+{
+  "e82653ca-9708-4c8a-968c-d6d6cd849957": {
+    "id": "e82653ca-9708-4c8a-968c-d6d6cd849957",
+    "type": "train_model",
+    "status": "failed",
+    "params": {
+      "model_name": "RandomForest"
+    },
+    "created_at": "2025-06-21T23:20:52.136713",
+    "started_at": "2025-06-21T23:20:52.145187",
+    "completed_at": "2025-06-21T23:20:52.214830",
+    "result": null,
+    "error": "Target column not set",
+    "progress": 30
+  },
+  "17c514ff-908d-44a4-88db-e80e968c34f1": {
+    "id": "17c514ff-908d-44a4-88db-e80e968c34f1",
+    "type": "benchmark_models",
+    "status": "completed",
+    "params": {},
+    "created_at": "2025-06-21T23:21:07.562695",
+    "started_at": "2025-06-21T23:21:07.573165",
+    "completed_at": "2025-06-21T23:21:10.757178",
+    "result": {
+      "task_type": "regression",
+      "best_model_name": "RandomForestRegressor",
+      "best_score": 0.9648,
+      "best_metric": "r2_score",
+      "all_results": {
+        "LinearRegression": {
+          "r2_score": 0.9397,
+          "rmse": 1.847,
+          "mse": 3.4116,
+          "mae": 1.4472,
+          "training_time": 0.09
+        },
+        "RandomForestRegressor": {
+          "r2_score": 0.9648,
+          "rmse": 1.4115,
+          "mse": 1.9924,
+          "mae": 1.0281,
+          "training_time": 1.606
+        },
+        "Ridge": {
+          "r2_score": 0.9397,
+          "rmse": 1.8471,
+          "mse": 3.4117,
+          "mae": 1.4472,
+          "training_time": 0.007
+        },
+        "SVR": {
+          "r2_score": 0.9469,
+          "rmse": 1.7334,
+          "mse": 3.0045,
+          "mae": 1.3238,
+          "training_time": 1.404
+        },
+        "DecisionTreeRegressor": {
+          "r2_score": 0.927,
+          "rmse": 2.0322,
+          "mse": 4.1297,
+          "mae": 1.3645,
+          "training_time": 0.026
+        },
+        "KNeighborsRegressor": {
+          "r2_score": 0.9573,
+          "rmse": 1.5534,
+          "mse": 2.4131,
+          "mae": 1.1163,
+          "training_time": 0.01
+        }
+      },
+      "n_samples": 7654,
+      "n_features": 4
+    },
+    "error": null,
+    "progress": 100
+  }
+}

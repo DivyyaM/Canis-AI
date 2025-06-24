@@ -1,0 +1,32 @@
+2025-06-21 23:18:07 | INFO     | logging:callHandlers:1706 - Started server process [17654]
+2025-06-21 23:18:07 | INFO     | logging:callHandlers:1706 - Waiting for application startup.
+2025-06-21 23:18:07 | INFO     | logging:callHandlers:1706 - Application startup complete.
+2025-06-21 23:18:07 | INFO     | logging:callHandlers:1706 - Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+2025-06-21 23:18:21 | INFO     | logging:callHandlers:1706 - Shutting down
+2025-06-21 23:18:21 | INFO     | logging:callHandlers:1706 - Waiting for application shutdown.
+2025-06-21 23:18:21 | INFO     | logging:callHandlers:1706 - Application shutdown complete.
+2025-06-21 23:18:21 | INFO     | logging:callHandlers:1706 - Finished server process [17654]
+2025-06-21 23:18:43 | INFO     | logging:callHandlers:1706 - Started server process [17688]
+2025-06-21 23:18:43 | INFO     | logging:callHandlers:1706 - Waiting for application startup.
+2025-06-21 23:18:43 | INFO     | logging:callHandlers:1706 - Application startup complete.
+2025-06-21 23:18:43 | INFO     | logging:callHandlers:1706 - Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+2025-06-21 23:18:54 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52942 - "GET / HTTP/1.1" 200
+2025-06-21 23:19:07 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52945 - "GET /docs HTTP/1.1" 200
+2025-06-21 23:19:08 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52945 - "GET /openapi.json HTTP/1.1" 200
+2025-06-21 23:19:33 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52952 - "GET / HTTP/1.1" 200
+2025-06-21 23:19:44 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52953 - "GET /api/v1/healthcheck/ HTTP/1.1" 200
+2025-06-21 23:20:21 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52960 - "GET /api/v1/status/ HTTP/1.1" 200
+2025-06-21 23:20:52 | INFO     | logging:callHandlers:1706 - Created task e82653ca-9708-4c8a-968c-d6d6cd849957 of type train_model
+2025-06-21 23:20:52 | INFO     | logging:callHandlers:1706 - Submitted task e82653ca-9708-4c8a-968c-d6d6cd849957 for execution
+2025-06-21 23:20:52 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52961 - "POST /api/v1/async-train/?model_name=RandomForest HTTP/1.1" 200
+2025-06-21 23:21:07 | INFO     | logging:callHandlers:1706 - Created task 17c514ff-908d-44a4-88db-e80e968c34f1 of type benchmark_models
+2025-06-21 23:21:07 | INFO     | logging:callHandlers:1706 - Submitted task 17c514ff-908d-44a4-88db-e80e968c34f1 for execution
+2025-06-21 23:21:07 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52962 - "POST /api/v1/async-benchmark/ HTTP/1.1" 200
+2025-06-21 23:22:10 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52973 - "GET /docs HTTP/1.1" 200
+2025-06-21 23:22:10 | INFO     | logging:callHandlers:1706 - 127.0.0.1:52976 - "GET /openapi.json HTTP/1.1" 200
+2025-06-25 00:27:00 | INFO     | logging:callHandlers:1706 - Started server process [23411]
+2025-06-25 00:27:00 | INFO     | logging:callHandlers:1706 - Waiting for application startup.
+2025-06-25 00:27:00 | INFO     | logging:callHandlers:1706 - Application startup complete.
+2025-06-25 00:27:03 | INFO     | logging:callHandlers:1706 - 127.0.0.1:56631 - "GET /docs HTTP/1.1" 200
+2025-06-25 00:27:14 | INFO     | logging:callHandlers:1706 - 127.0.0.1:56635 - "GET /docs HTTP/1.1" 200
+2025-06-25 00:27:14 | INFO     | logging:callHandlers:1706 - 127.0.0.1:56635 - "GET /openapi.json HTTP/1.1" 200
