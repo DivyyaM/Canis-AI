@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: canis-backend
+    env: python
+    buildCommand: pip install -r Backend/requirements.txt
+    startCommand: uvicorn Backend.app.main:app --host 0.0.0.0 --port 8000
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8000 
