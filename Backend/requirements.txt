@@ -15,4 +15,5 @@ requests==2.31.0
 python-dotenv==1.0.0
 loguru==0.7.2
 psutil==5.9.6
-httpx 
+httpx
+xgboost==2.0.1
