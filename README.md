@@ -251,4 +251,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 Start with Canis AI today and experience the future of automated machine learning. Your intelligent ML companion is waiting to help you build better models, faster.
 
-*Built with ❤️ for the ML community* 
+*Built with ❤️ for the ML community*
