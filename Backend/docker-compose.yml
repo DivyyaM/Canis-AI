@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # Main AutoML Backend
+  canis-backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgresql://canis:canis123@postgres:5432/canis_db
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+    volumes:
+      - model-storage:/app/models
+      - log-storage:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - canis-network
+
+  # Celery Worker for Async Tasks
+  celery-worker:
+    build: .
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgresql://canis:canis123@postgres:5432/canis_db
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - model-storage:/app/models
+      - log-storage:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - canis-network
+
+  # Celery Beat for Scheduled Tasks
+  celery-beat:
+    build: .
+    command: celery -A app.core.celery_app beat --loglevel=info
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgresql://canis:canis123@postgres:5432/canis_db
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - model-storage:/app/models
+      - log-storage:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - canis-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=canis_db
+      - POSTGRES_USER=canis
+      - POSTGRES_PASSWORD=canis123
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - canis-network
+
+  # Redis for Celery and Caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - canis-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - canis-backend
+    restart: unless-stopped
+    networks:
+      - canis-network
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    networks:
+      - canis-network
+
+  # Grafana for Visualization
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - canis-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  model-storage:
+  log-storage:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  canis-network:
+    driver: bridge 

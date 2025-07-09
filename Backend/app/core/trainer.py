@@ -27,7 +27,7 @@ def train_model():
             return {"error": "No target column identified. Please upload and analyze a dataset first."}
         
         # Get model selection
-        from .model_selector import select_model
+        from .preprocessor import select_model
         model_info = select_model()
         selected_model = model_info.get("selected_model")
         model_params = model_info.get("model_params", {})
@@ -115,8 +115,9 @@ def train_model():
         
         # Auto-run benchmark after training
         try:
-            from .model_benchmark import benchmark_models
-            benchmark_results = benchmark_models()
+            from .benchmark_manager import BenchmarkManager
+            benchmark_manager = BenchmarkManager()
+            benchmark_results = benchmark_manager.run_benchmark()
             if "error" not in benchmark_results:
                 gemini.benchmark_results = benchmark_results
         except Exception as e:

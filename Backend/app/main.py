@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router
-from .core.logging_config import setup_logging
+import logging
 
-# Setup logging
-setup_logging()
+# Setup basic logging
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="Canis AI Backend",

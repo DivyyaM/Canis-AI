@@ -258,3 +258,179 @@ def explain_model_performance(training_results, metadata):
 
     except Exception as e:
         return {"error": f"Could not evaluate model performance: {str(e)}"}
+
+# --- Advanced Explainability Tools (SHAP & LIME) ---
+# These functions provide advanced model interpretability using SHAP and LIME.
+# Originally from advanced_explainability.py, now unified for clarity.
+
+import os
+
+TMP_DIR = "tmp"
+os.makedirs(TMP_DIR, exist_ok=True)
+
+def generate_shap_explanations(sample_index=None, num_samples=100):
+    """Generate SHAP explanations for model predictions"""
+    try:
+        if not gemini.model:
+            return {"error": "No model trained yet. Please train a model first."}
+        try:
+            X_test = joblib.load(f"{TMP_DIR}/X_test.pkl")
+            y_test = joblib.load(f"{TMP_DIR}/y_test.pkl")
+        except FileNotFoundError:
+            return {"error": "Test data not found. Please train the model first."}
+        metadata = gemini.get_metadata()
+        feature_names = metadata.get("feature_columns", [])
+        try:
+            import shap
+        except ImportError:
+            return {"error": "SHAP not installed. Please install with: pip install shap"}
+        if hasattr(gemini.model, 'steps'):
+            final_model = gemini.model.steps[-1][1]
+            preprocessor = gemini.model.steps[0][1] if len(gemini.model.steps) > 1 else None
+            if preprocessor:
+                X_test_transformed = preprocessor.transform(X_test)
+                if hasattr(preprocessor, 'get_feature_names_out'):
+                    transformed_feature_names = preprocessor.get_feature_names_out().tolist()
+                else:
+                    transformed_feature_names = [f"feature_{i}" for i in range(X_test_transformed.shape[1])]
+            else:
+                X_test_transformed = X_test
+                transformed_feature_names = feature_names
+        else:
+            final_model = gemini.model
+            X_test_transformed = X_test
+            transformed_feature_names = feature_names
+        if hasattr(final_model, 'predict_proba'):
+            if hasattr(final_model, 'feature_importances_'):
+                explainer = shap.TreeExplainer(final_model)
+            else:
+                background_data = pd.DataFrame(X_test_transformed[:min(num_samples, len(X_test_transformed))], columns=transformed_feature_names)
+                explainer = shap.KernelExplainer(final_model.predict_proba, background_data)
+        else:
+            if hasattr(final_model, 'feature_importances_'):
+                explainer = shap.TreeExplainer(final_model)
+            else:
+                background_data = pd.DataFrame(X_test_transformed[:min(num_samples, len(X_test_transformed))], columns=transformed_feature_names)
+                explainer = shap.KernelExplainer(final_model.predict, background_data)
+        if sample_index is not None:
+            if sample_index >= len(X_test_transformed):
+                return {"error": f"Sample index {sample_index} out of range. Max index: {len(X_test_transformed)-1}"}
+            sample = X_test_transformed[sample_index:sample_index+1]
+            shap_values = explainer.shap_values(sample)
+            if isinstance(shap_values, list):
+                shap_values = shap_values[0]
+            explanation = {
+                "sample_index": sample_index,
+                "actual_value": int(y_test[sample_index]),
+                "predicted_value": int(gemini.model.predict(X_test[sample_index:sample_index+1])[0]),
+                "feature_importance": dict(zip(transformed_feature_names, shap_values.tolist())),
+                "base_value": float(explainer.expected_value) if hasattr(explainer, 'expected_value') else 0.0
+            }
+        else:
+            if hasattr(final_model, 'feature_importances_'):
+                importance = final_model.feature_importances_
+            else:
+                shap_values = explainer.shap_values(X_test_transformed[:num_samples])
+                if isinstance(shap_values, list):
+                    shap_values = np.abs(shap_values[0])
+                importance = np.mean(np.abs(shap_values), axis=0)
+            explanation = {
+                "global_feature_importance": dict(zip(transformed_feature_names, importance.tolist())),
+                "num_samples_analyzed": min(num_samples, len(X_test_transformed))
+            }
+        return {
+            "status": "success",
+            "explanation_type": "shap",
+            "explanation": explanation
+        }
+    except Exception as e:
+        return {"error": f"SHAP explanation failed: {str(e)}"}
+
+def generate_lime_explanations(sample_index=0, num_features=10):
+    """Generate LIME explanations for model predictions"""
+    try:
+        if not gemini.model:
+            return {"error": "No model trained yet. Please train the model first."}
+        try:
+            X_test = joblib.load(f"{TMP_DIR}/X_test.pkl")
+            y_test = joblib.load(f"{TMP_DIR}/y_test.pkl")
+        except FileNotFoundError:
+            return {"error": "Test data not found. Please train the model first."}
+        metadata = gemini.get_metadata()
+        feature_names = metadata.get("feature_columns", [])
+        try:
+            from lime import lime_tabular
+        except ImportError:
+            return {"error": "LIME not installed. Please install with: pip install lime"}
+        if sample_index >= len(X_test):
+            return {"error": f"Sample index {sample_index} out of range. Max index: {len(X_test)-1}"}
+        explainer = lime_tabular.LimeTabularExplainer(
+            X_test,
+            feature_names=feature_names,
+            class_names=['Class 0', 'Class 1'] if len(np.unique(y_test)) == 2 else None,
+            mode='classification' if hasattr(gemini.model, 'predict_proba') else 'regression'
+        )
+        sample = X_test[sample_index]
+        exp = explainer.explain_instance(
+            sample, 
+            gemini.model.predict_proba if hasattr(gemini.model, 'predict_proba') else gemini.model.predict,
+            num_features=num_features
+        )
+        explanation_data = []
+        for feature, weight in exp.as_list():
+            explanation_data.append({
+                "feature": feature,
+                "weight": float(weight)
+            })
+        explanation = {
+            "sample_index": sample_index,
+            "actual_value": int(y_test[sample_index]),
+            "predicted_value": int(gemini.model.predict([sample])[0]),
+            "feature_contributions": explanation_data,
+            "num_features": num_features
+        }
+        return {
+            "status": "success",
+            "explanation_type": "lime",
+            "explanation": explanation
+        }
+    except Exception as e:
+        return {"error": f"LIME explanation failed: {str(e)}"}
+
+def generate_feature_importance_analysis():
+    """Generate comprehensive feature importance analysis"""
+    try:
+        if not gemini.model:
+            return {"error": "No model trained yet. Please train a model first."}
+        metadata = gemini.get_metadata()
+        feature_names = metadata.get("feature_columns", [])
+        if hasattr(gemini.model, 'feature_importances_'):
+            importances = gemini.model.feature_importances_
+            importance_data = [
+                {"feature": name, "importance": float(imp), "rank": i + 1}
+                for i, (name, imp) in enumerate(zip(feature_names, importances))
+            ]
+            importance_data.sort(key=lambda x: x["importance"], reverse=True)
+            return {
+                "method": "Tree-based feature importance",
+                "explanation": "Feature importance was calculated using the model's built-in feature importance method.",
+                "top_features": importance_data[:5],
+                "total_features": len(feature_names)
+            }
+        elif hasattr(gemini.model, 'coef_'):
+            coefficients = gemini.model.coef_.flatten()
+            importance_data = [
+                {"feature": name, "coefficient": float(coef), "rank": i + 1}
+                for i, (name, coef) in enumerate(zip(feature_names, coefficients))
+            ]
+            importance_data.sort(key=lambda x: abs(x["coefficient"]), reverse=True)
+            return {
+                "method": "Coefficient-based feature importance",
+                "explanation": "Feature importance was calculated using model coefficients.",
+                "top_features": importance_data[:5],
+                "total_features": len(feature_names)
+            }
+        else:
+            return {"error": "Model does not support feature importance analysis."}
+    except Exception as e:
+        return {"error": f"Feature importance analysis failed: {str(e)}"}
