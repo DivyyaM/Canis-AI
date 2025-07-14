@@ -1,6 +1,7 @@
 """
-Gemini Brain - Central Intelligence Layer for Canis AI Backend
-Maintains context and metadata across all modules
+Gemini Brain: Central intelligence for Canis AI AutoML backend.
+- LLM-powered target/feature detection, task classification, model selection, and evaluation.
+- Integrates with Google Gemini Pro for smart automation.
 """
 
 import pandas as pd
@@ -20,6 +21,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.neighbors import KNeighborsClassifier
 from xgboost import XGBClassifier, XGBRegressor
 import traceback
+import logging
 
 @dataclass
 class DatasetMetadata:
@@ -48,7 +50,11 @@ class DatasetMetadata:
             self.missing_values = {}
 
 class GeminiBrain:
-    """Central intelligence layer for the Canis AI system"""
+    """
+    Central intelligence layer for the Canis AI system.
+    Handles dataset analysis, LLM-powered feature/target detection, model selection,
+    training, evaluation, and explainability for AutoML workflows.
+    """
 
     def __init__(self):
         self.metadata = DatasetMetadata()
@@ -69,6 +75,16 @@ class GeminiBrain:
         self.evaluation_results = {}
 
     def analyze_dataset(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Analyze the input DataFrame to extract metadata, detect the target column,
+        classify the ML task, and identify feature types.
+
+        Args:
+            df (pd.DataFrame): The input dataset.
+
+        Returns:
+            Dict[str, Any]: Metadata including target column, task type, feature columns, etc.
+        """
         try:
             self.metadata.n_samples, self.metadata.n_features = df.shape
 
@@ -98,7 +114,16 @@ class GeminiBrain:
             return {"error": str(e)}
 
     def _detect_target_column(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Enhanced target column detection with intelligent LLM override"""
+        """
+        Detect the most likely target column using rule-based heuristics and, if needed,
+        override with Gemini LLM for advanced inference.
+
+        Args:
+            df (pd.DataFrame): The input dataset.
+
+        Returns:
+            Dict[str, Any]: Target column suggestion and reasoning.
+        """
         scores = {}
         
         # Rule-based scoring
@@ -160,9 +185,9 @@ class GeminiBrain:
                         "reason": "LLM analysis suggested better target column"
                     }
                 else:
-                    print(f"LLM response invalid: {llm_response}")
+                    logging.warning(f"LLM response invalid: {llm_response}")
             except Exception as e:
-                print(f"LLM override failed: {str(e)}")
+                logging.error(f"LLM override failed: {str(e)}")
 
         # Final fallback: last column convention
         fallback_target = df.columns[-1]
@@ -173,8 +198,17 @@ class GeminiBrain:
             "reason": "No clear target identified, using last column as fallback"
         }
 
-    def llm_suggest_target_and_features(self, df: pd.DataFrame, api_key: str) -> Dict[str, Any]:
-        """Enhanced LLM-based target and feature suggestion"""
+    def llm_suggest_target_column(self, df: pd.DataFrame, api_key: str) -> Dict[str, Any]:
+        """
+        Use Gemini LLM to suggest the target column and features for the dataset.
+
+        Args:
+            df (pd.DataFrame): The input dataset.
+            api_key (str): Gemini API key.
+
+        Returns:
+            Dict[str, Any]: LLM-suggested target, features, code, and reasoning.
+        """
         try:
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel("gemini-1.5-pro")
@@ -246,6 +280,16 @@ Respond ONLY with valid JSON in this exact format:
             return {"error": f"LLM analysis failed: {str(e)}"}
 
     def _classify_task(self, df: pd.DataFrame, target_col: str) -> Dict[str, Any]:
+        """
+        Classify the ML task (classification, regression, NLP) based on the target column.
+
+        Args:
+            df (pd.DataFrame): The input dataset.
+            target_col (str): The target column name.
+
+        Returns:
+            Dict[str, Any]: Task type and reasoning.
+        """
         y = df[target_col]
         text_columns = []
         for col in df.columns:
@@ -283,6 +327,15 @@ Respond ONLY with valid JSON in this exact format:
                 }
 
     def create_preprocessing_pipeline(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Create a preprocessing pipeline based on feature types and missing values.
+
+        Args:
+            df (pd.DataFrame): The input dataset.
+
+        Returns:
+            Dict[str, Any]: Preprocessing steps and encoders.
+        """
         try:
             if not self.metadata.target_column:
                 return {"error": "No target column detected"}
@@ -318,6 +371,12 @@ Respond ONLY with valid JSON in this exact format:
             return {"error": str(e)}
 
     def get_metadata(self) -> Dict[str, Any]:
+        """
+        Get the current dataset metadata as a JSON-serializable dictionary.
+
+        Returns:
+            Dict[str, Any]: Metadata for the current dataset.
+        """
         metadata_dict = asdict(self.metadata)
         def make_json_serializable(obj):
             if isinstance(obj, dict):
@@ -333,6 +392,12 @@ Respond ONLY with valid JSON in this exact format:
         return make_json_serializable(metadata_dict)
 
     def get_context_for_chat(self) -> Dict[str, Any]:
+        """
+        Get a summary of the current context for conversational AI responses.
+
+        Returns:
+            Dict[str, Any]: Context information for chat.
+        """
         context = {
             "target_column": self.metadata.target_column,
             "task_type": self.metadata.task_type,
@@ -362,6 +427,15 @@ Respond ONLY with valid JSON in this exact format:
         return make_json_serializable(context)
 
     def load_model(self, model_path: str) -> Dict[str, Any]:
+        """
+        Load a trained model from disk and update internal state.
+
+        Args:
+            model_path (str): Path to the model file.
+
+        Returns:
+            Dict[str, Any]: Status and model info.
+        """
         try:
             if not os.path.exists(model_path):
                 return {"error": f"Model file not found: {model_path}"}
@@ -385,7 +459,12 @@ Respond ONLY with valid JSON in this exact format:
             return {"error": f"Failed to load model: {str(e)}"}
 
     def suggest_models(self) -> List[str]:
-        """Suggest models based on the task type"""
+        """
+        Suggest suitable models based on the detected task type.
+
+        Returns:
+            List[str]: List of model names.
+        """
         if self.metadata.task_type == "binary_classification":
             return ["LogisticRegression", "RandomForestClassifier", "XGBClassifier", "SVC", "KNeighborsClassifier"]
         elif self.metadata.task_type == "multiclass_classification":
@@ -396,7 +475,16 @@ Respond ONLY with valid JSON in this exact format:
             return ["RandomForestClassifier"]  # Default fallback
 
     def auto_train_model(self, df: pd.DataFrame, model_name: str = "RandomForest") -> Dict[str, Any]:
-        """Train model based on metadata and user-selected model"""
+        """
+        Train a model based on the current metadata and user-selected model.
+
+        Args:
+            df (pd.DataFrame): The input dataset.
+            model_name (str): The model to train.
+
+        Returns:
+            Dict[str, Any]: Training status, scores, and evaluation.
+        """
         try:
             if not self.metadata.target_column:
                 return {"error": "Target column not set"}
@@ -466,7 +554,15 @@ Respond ONLY with valid JSON in this exact format:
             }
 
     def _create_model(self, model_name: str):
-        """Create model instance based on name and task type"""
+        """
+        Create a model instance based on the name and task type.
+
+        Args:
+            model_name (str): The model name.
+
+        Returns:
+            Model instance or None if not found.
+        """
         try:
             # Normalize model name
             model_name = model_name.strip()
@@ -521,11 +617,20 @@ Respond ONLY with valid JSON in this exact format:
                     return None
 
         except Exception as e:
-            print(f"Error creating model {model_name}: {str(e)}")
+            logging.error(f"Error creating model {model_name}: {str(e)}")
             return None
 
     def _generate_evaluation_report(self, y_true, y_pred) -> Dict[str, Any]:
-        """Generate comprehensive evaluation report"""
+        """
+        Generate a comprehensive evaluation report for the trained model.
+
+        Args:
+            y_true: Ground truth labels.
+            y_pred: Model predictions.
+
+        Returns:
+            Dict[str, Any]: Evaluation metrics.
+        """
         try:
             if self.metadata.task_type == "binary_classification":
                 # Handle binary classification with dynamic pos_label
@@ -560,7 +665,15 @@ Respond ONLY with valid JSON in this exact format:
             return {"error": f"Evaluation failed: {str(e)}"}
 
     def generate_training_code_llm(self, df: pd.DataFrame) -> str:
-        """Use Gemini to generate complete training code block using existing API key configuration"""
+        """
+        Use Gemini LLM to generate a complete Python script for model training.
+
+        Args:
+            df (pd.DataFrame): The input dataset.
+
+        Returns:
+            str: Generated Python code as a string.
+        """
         try:
             # Load API key from environment (same as other LLM methods)
             from dotenv import load_dotenv
@@ -603,7 +716,12 @@ Generate ONLY the Python code, no explanations. Make it production-ready with pr
             return f"# Error generating training code: {str(e)}\n\n# Please check your GEMINI_API_KEY environment variable and try again."
 
     def get_evaluation_report(self) -> Dict[str, Any]:
-        """Get the current evaluation report"""
+        """
+        Get the current evaluation report for the trained model.
+
+        Returns:
+            Dict[str, Any]: Evaluation report and training info.
+        """
         if not self.evaluation_results:
             return {"error": "No evaluation results available. Please train a model first."}
         

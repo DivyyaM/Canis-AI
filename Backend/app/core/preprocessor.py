@@ -1,3 +1,7 @@
+"""
+Preprocessing for Canis AI AutoML backend.
+- Intelligent pipeline creation and model selection for robust ML workflows.
+"""
 import pandas as pd
 import numpy as np
 from pandas.api.types import is_numeric_dtype, is_object_dtype
@@ -7,8 +11,12 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import joblib
 
-def select_model():
-    """Intelligently select the best model based on task and data characteristics"""
+def select_model() -> dict:
+    """
+    Intelligently select the best model based on task and data characteristics.
+    Returns:
+        dict: Selected model name and parameters, or error info.
+    """
     try:
         df = pd.read_csv("tmp/dataset.csv")
         # Get task classification
@@ -42,10 +50,14 @@ def select_model():
         else:
             return {"selected_model": "RandomForestClassifier", "model_params": {}}
     except Exception as e:
-        return {"selected_model": None, "error": str(e)}
+        return {"selected_model": None, "error": f"Model selection failed: {str(e)}"}
 
-def create_preprocessing_pipeline():
-    """Create intelligent preprocessing pipeline based on data characteristics"""
+def create_preprocessing_pipeline() -> dict:
+    """
+    Create an intelligent preprocessing pipeline based on data characteristics.
+    Returns:
+        dict: Pipeline creation status, feature info, and encoding details.
+    """
     try:
         df = pd.read_csv("tmp/dataset.csv")
         # Get target column
@@ -109,10 +121,14 @@ def create_preprocessing_pipeline():
         else:
             return {"error": "No features to preprocess"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Preprocessing pipeline creation failed: {str(e)}"}
 
-def get_preprocessed_data():
-    """Get preprocessed features and target"""
+def get_preprocessed_data() -> dict:
+    """
+    Get preprocessed features and target for downstream ML tasks.
+    Returns:
+        dict: Shapes, feature names, and encoding info, or error.
+    """
     try:
         df = pd.read_csv("tmp/dataset.csv")
         # Get target column
@@ -148,4 +164,4 @@ def get_preprocessed_data():
             "target_encoded": y.dtype == 'object'
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Preprocessing failed: {str(e)}"}

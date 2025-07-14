@@ -1,3 +1,7 @@
+"""
+Trainer for Canis AI AutoML backend.
+- Model training, cross-validation, and integration with Gemini Brain.
+"""
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score, KFold
@@ -12,13 +16,19 @@ import xgboost as xgb
 import joblib
 import os
 from .gemini_brain import gemini
+import logging
 
 # Create tmp directory for benchmark data
 TMP_DIR = "tmp"
 os.makedirs(TMP_DIR, exist_ok=True)
 
-def train_model():
-    """Train the selected model using Gemini Brain metadata"""
+def train_model() -> dict:
+    """
+    Train the selected model using Gemini Brain metadata and user-selected model.
+
+    Returns:
+        dict: Training status, scores, and evaluation results.
+    """
     try:
         # Get metadata from Gemini Brain
         metadata = gemini.get_metadata()
@@ -121,7 +131,7 @@ def train_model():
             if "error" not in benchmark_results:
                 gemini.benchmark_results = benchmark_results
         except Exception as e:
-            print(f"Benchmark auto-run failed: {str(e)}")
+            logging.warning(f"Benchmark auto-run failed: {str(e)}")
         
         return {
             "status": "model_trained",
@@ -140,10 +150,23 @@ def train_model():
         }
         
     except Exception as e:
-        return {"error": str(e)}
+        logging.error(f"Model training failed: {str(e)}")
+        return {"error": f"Model training failed: {str(e)}"}
 
-def perform_cross_validation(model, X, y, task_type="classification", cv_folds=5):
-    """Perform k-fold cross-validation"""
+def perform_cross_validation(model, X, y, task_type="classification", cv_folds=5) -> dict:
+    """
+    Perform k-fold cross-validation for the given model and data.
+
+    Args:
+        model: The ML model instance.
+        X: Features (array-like).
+        y: Target (array-like).
+        task_type (str): Type of ML task ('classification', 'regression', etc.).
+        cv_folds (int): Number of cross-validation folds.
+
+    Returns:
+        dict: Cross-validation scores and statistics.
+    """
     try:
         # Determine scoring metric based on task type
         if task_type == "regression":
@@ -168,7 +191,7 @@ def perform_cross_validation(model, X, y, task_type="classification", cv_folds=5
         }
         
     except Exception as e:
-        print(f"Cross-validation failed: {str(e)}")
+        logging.error(f"Cross-validation failed: {str(e)}")
         return {
             "scores": [],
             "mean": 0.0,
@@ -178,8 +201,17 @@ def perform_cross_validation(model, X, y, task_type="classification", cv_folds=5
             "error": str(e)
         }
 
-def create_model(model_name, params):
-    """Create model instance based on name and parameters"""
+def create_model(model_name: str, params: dict):
+    """
+    Create a model instance based on the model name and parameters.
+
+    Args:
+        model_name (str): Name of the ML model.
+        params (dict): Model parameters.
+
+    Returns:
+        Model instance.
+    """
     model_map = {
         "RandomForestClassifier": RandomForestClassifier,
         "RandomForestRegressor": RandomForestRegressor,
@@ -197,6 +229,5 @@ def create_model(model_name, params):
         "XGBClassifier": xgb.XGBClassifier,
         "XGBRegressor": xgb.XGBRegressor
     }
-    
     model_class = model_map.get(model_name, RandomForestClassifier)
     return model_class(**params)

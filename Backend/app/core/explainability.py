@@ -1,3 +1,7 @@
+"""
+Explainability for Canis AI AutoML backend.
+- Explains model decisions, integrates SHAP/LIME, and supports business/ML transparency.
+"""
 import pandas as pd
 import numpy as np
 import joblib
@@ -5,8 +9,12 @@ from sklearn.inspection import permutation_importance
 from .gemini_brain import gemini
 
 
-def explain():
-    """Provide comprehensive explanations for model decisions and performance"""
+def explain() -> dict:
+    """
+    Provide comprehensive explanations for model decisions and performance.
+    Returns:
+        dict: Explanations for target detection, task classification, model selection, preprocessing, performance, and feature importance.
+    """
     try:
         # Get metadata from Gemini Brain
         metadata = gemini.get_metadata()
@@ -41,10 +49,17 @@ def explain():
         return explanations
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Explainability failed: {str(e)}"}
 
 
-def explain_target_detection(metadata):
+def explain_target_detection(metadata: dict) -> dict:
+    """
+    Explain how the target column was detected.
+    Args:
+        metadata (dict): Dataset metadata.
+    Returns:
+        dict: Explanation of target detection.
+    """
     target_col = metadata.get("target_column")
     confidence_score = metadata.get("confidence_score", 0.0)
 
@@ -65,7 +80,14 @@ def explain_target_detection(metadata):
     return explanations
 
 
-def explain_task_classification(metadata):
+def explain_task_classification(metadata: dict) -> dict:
+    """
+    Explain how the ML task was classified.
+    Args:
+        metadata (dict): Dataset metadata.
+    Returns:
+        dict: Explanation of task classification.
+    """
     task = metadata.get("task_type")
     reason = metadata.get("task_reason", "unknown")
 
@@ -89,7 +111,15 @@ def explain_task_classification(metadata):
     return explanations
 
 
-def explain_model_selection(model_params, metadata):
+def explain_model_selection(model_params: dict, metadata: dict) -> dict:
+    """
+    Explain why a particular model was selected.
+    Args:
+        model_params (dict): Model parameters.
+        metadata (dict): Dataset metadata.
+    Returns:
+        dict: Explanation of model selection.
+    """
     model_name = (
         list(gemini.model.__class__.__bases__)[0].__name__
         if gemini.model else "Unknown"
@@ -141,7 +171,14 @@ def explain_model_selection(model_params, metadata):
     return explanations
 
 
-def explain_preprocessing(metadata):
+def explain_preprocessing(metadata: dict) -> dict:
+    """
+    Explain the preprocessing steps applied to the data.
+    Args:
+        metadata (dict): Dataset metadata.
+    Returns:
+        dict: Explanation of preprocessing steps.
+    """
     numeric_features = metadata.get("numeric_features", [])
     categorical_features = metadata.get("categorical_features", [])
     missing_values = metadata.get("missing_values", {})
@@ -177,7 +214,16 @@ def explain_preprocessing(metadata):
     return explanations
 
 
-def explain_feature_importance(model, df, metadata):
+def explain_feature_importance(model, df, metadata: dict) -> dict:
+    """
+    Explain feature importance using model-specific or model-agnostic methods.
+    Args:
+        model: Trained ML model.
+        df: Input DataFrame.
+        metadata (dict): Dataset metadata.
+    Returns:
+        dict: Explanation of feature importance.
+    """
     if hasattr(model, 'feature_importances_'):
         feature_names = metadata.get("feature_columns", [])
         feature_importances = model.feature_importances_
@@ -225,7 +271,15 @@ def explain_feature_importance(model, df, metadata):
         }
 
 
-def explain_model_performance(training_results, metadata):
+def explain_model_performance(training_results: dict, metadata: dict) -> dict:
+    """
+    Explain model performance metrics and interpretation.
+    Args:
+        training_results (dict): Training results and scores.
+        metadata (dict): Dataset metadata.
+    Returns:
+        dict: Explanation of model performance.
+    """
     try:
         if not training_results:
             return {"error": "No training results available. Please train the model first."}
@@ -257,7 +311,7 @@ def explain_model_performance(training_results, metadata):
         return explanation
 
     except Exception as e:
-        return {"error": f"Could not evaluate model performance: {str(e)}"}
+        return {"error": f"Model performance explanation failed: {str(e)}"}
 
 # --- Advanced Explainability Tools (SHAP & LIME) ---
 # These functions provide advanced model interpretability using SHAP and LIME.

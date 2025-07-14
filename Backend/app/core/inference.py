@@ -1,6 +1,6 @@
 """
-Real-time inference module for Canis AI
-Handles model loading and prediction generation
+Inference for Canis AI AutoML backend.
+- Real-time, production-ready prediction and model/encoder loading.
 """
 
 import joblib
@@ -14,9 +14,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 class InferenceEngine:
-    """Handles real-time model inference"""
-    
+    """
+    Handles real-time model inference for the Canis AI platform.
+    Loads models, preprocessors, and encoders, and provides prediction APIs.
+    """
     def __init__(self, model_path: str = None):
+        """
+        Initialize the inference engine and load model artifacts.
+        Args:
+            model_path (str, optional): Path to the model file. Defaults to None.
+        """
         self.model = None
         self.preprocessor = None
         self.target_encoder = None
@@ -24,7 +31,9 @@ class InferenceEngine:
         self._load_model()
     
     def _load_model(self):
-        """Load the trained model and preprocessor"""
+        """
+        Load the trained model, preprocessor, and target encoder from disk or Gemini Brain.
+        """
         try:
             # Try to load from Gemini Brain first
             if gemini.model:
@@ -57,13 +66,11 @@ class InferenceEngine:
     
     def predict(self, data: Union[Dict, List[Dict], pd.DataFrame]) -> Dict[str, Any]:
         """
-        Make predictions on input data
-        
+        Make predictions on input data.
         Args:
-            data: Input data as dict, list of dicts, or DataFrame
-            
+            data: Input data as dict, list of dicts, or DataFrame.
         Returns:
-            Dictionary with predictions and metadata
+            dict: Predictions, probabilities (if available), and metadata.
         """
         try:
             if not self.model:
@@ -145,7 +152,11 @@ class InferenceEngine:
             return {"error": f"Prediction failed: {str(e)}"}
     
     def get_model_info(self) -> Dict[str, Any]:
-        """Get information about the loaded model"""
+        """
+        Get information about the loaded model and its configuration.
+        Returns:
+            dict: Model type, task type, target column, features, and parameters.
+        """
         if not self.model:
             return {"error": "No model loaded"}
         
@@ -166,13 +177,29 @@ class InferenceEngine:
 inference_engine = InferenceEngine()
 
 def predict_single(data: Dict) -> Dict[str, Any]:
-    """Make prediction on single data point"""
+    """
+    Make prediction on a single data point.
+    Args:
+        data (dict): Input data.
+    Returns:
+        dict: Prediction result.
+    """
     return inference_engine.predict(data)
 
 def predict_batch(data: List[Dict]) -> Dict[str, Any]:
-    """Make predictions on batch of data"""
+    """
+    Make predictions on a batch of data.
+    Args:
+        data (List[dict]): List of input data points.
+    Returns:
+        dict: Batch prediction results.
+    """
     return inference_engine.predict(data)
 
 def get_model_info() -> Dict[str, Any]:
-    """Get current model information"""
+    """
+    Get current model information.
+    Returns:
+        dict: Model info and configuration.
+    """
     return inference_engine.get_model_info() 
