@@ -94,5 +94,3 @@ I wanted something that:
 - Built with standard Python tools (FastAPI, scikit-learn, etc.)
 
 ---
-
-*Built for real-world ML workflows, not just demos.* 
